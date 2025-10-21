@@ -24,6 +24,12 @@ cp .env.example .env
 - `TELEGRAM_BOT_URL` - ссылка на вашего бота (например, https://t.me/your_bot)
 - `SECRET_KEY` - секретный ключ для Flask
 
+### 3.0 Запуск приложения сразу (игнорировать всё дальше)
+
+```bash
+./run_local.sh
+```
+
 ### 3. Запуск приложения
 
 ```bash
