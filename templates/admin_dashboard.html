@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Управление проектами</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>👑 Админ-панель портфолио</h1>
+            <div class="header-actions">
+                <span class="user-info">Добро пожаловать, {{ session.username }}!</span>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-secondary">Выйти</a>
+            </div>
+        </header>
+
+        <main class="admin-content">
+            {% if success %}
+                <div class="alert alert-success">
+                    {{ success }}
+                </div>
+            {% endif %}
+
+            {% if error %}
+                <div class="alert alert-error">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <div class="actions-bar">
+                <h2>Управление проектами</h2>
+                <button class="btn btn-primary" onclick="showAddForm()">+ Добавить проект</button>
+                <button class="btn btn-secondary" onclick="toggleTagsManagement()">🏷️ Управление тегами</button>
+            </div>
+
+            <!-- Tags Management Section -->
+            <div id="tags-management" class="tags-management" style="display: none;">
+                <h3>Управление тегами</h3>
+
+                <!-- Add Tag Form -->
+                <form method="POST" action="{{ url_for('admin_dashboard') }}" class="tag-add-form">
+                    <input type="hidden" name="action" value="add_tag">
+                    <input type="text" name="tag_name" placeholder="Название нового тега" required>
+                    <button type="submit" class="btn btn-primary">Добавить тег</button>
+                </form>
+
+                <!-- Tags List -->
+                <div class="tags-list">
+                    {% for tag in tags %}
+                    <div class="tag-item">
+                        <span class="tag-name">{{ tag.name }}</span>
+                        <form method="POST" action="{{ url_for('admin_dashboard') }}" style="display: inline;"
+                              onsubmit="return confirm('Удалить тег \'{{ tag.name }}\'? Это также удалит его связи с проектами.')">
+                            <input type="hidden" name="action" value="delete_tag">
+                            <input type="hidden" name="tag_id" value="{{ tag.id }}">
+                            <button type="submit" class="btn-delete-tag">×</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+
+                    {% if not tags %}
+                    <p class="empty-tags">Теги не созданы. Добавьте первый тег.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Add/Edit Project Form -->
+            <div id="project-form" class="project-form" style="display: none;">
+                <h3 id="form-title">Добавить новый проект</h3>
+                <form id="project-form-element" method="POST" action="{{ url_for('admin_dashboard') }}" enctype="multipart/form-data">
+                    <input type="hidden" id="project-id" name="project_id">
+                    <input type="hidden" name="action" value="save">
+
+                    <div class="form-group">
+                        <label for="title">Название проекта:</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Краткое описание:</label>
+                        <textarea id="description" name="description" rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="full_description">Полное описание:</label>
+                        <textarea id="full_description" name="full_description" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="live_url">Ссылка на проект:</label>
+                        <input type="url" id="live_url" name="live_url" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="preview_image">Изображение проекта:</label>
+                        <input type="file" id="preview_image" name="preview_image" accept="image/*">
+                        <small>Оставьте пустым, чтобы сохранить текущее изображение</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Теги проекта:</label>
+                        <div id="tags-checkboxes" class="tags-checkboxes">
+                            {% for tag in tags %}
+                            <label class="tag-checkbox">
+                                <input type="checkbox" name="tags" value="{{ tag.id }}" id="tag-{{ tag.id }}">
+                                <span>{{ tag.name }}</span>
+                            </label>
+                            {% endfor %}
+
+                            {% if not tags %}
+                            <p class="no-tags-message">Теги не созданы. <a href="#" onclick="toggleTagsManagement(); return false;">Создать теги</a></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideForm()">Отмена</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Projects List -->
+            <div class="projects-list">
+                {% for project in projects %}
+                <div class="project-item">
+                    <div class="project-preview">
+                        <img src="{{ project.preview_image }}" alt="{{ project.title }}" onerror="this.src='/static/images/placeholder.jpg'">
+                    </div>
+                    <div class="project-info">
+                        <h3>{{ project.title }}</h3>
+                        <p class="project-description">{{ project.description }}</p>
+                        <p class="project-url">
+                            <a href="{{ project.live_url }}" target="_blank">{{ project.live_url }}</a>
+                        </p>
+                        {% if project.tags %}
+                        <div class="project-tags-display">
+                            {% for tag in project.tags %}
+                            <span class="tag-badge">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <p class="project-meta">
+                            Создан: {{ project.created_at[:16] }}
+                            {% if project.updated_at != project.created_at %}
+                            | Обновлен: {{ project.updated_at[:16] }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="project-actions">
+                        <button class="btn btn-edit" onclick="editProject({{ project.id }})">✏️ Редактировать</button>
+                        <button class="btn btn-duplicate" onclick="duplicateProject({{ project.id }})">📋 Дублировать</button>
+                        <form method="POST" action="{{ url_for('admin_dashboard') }}" style="display: inline;"
+                              onsubmit="return confirm('Вы уверены, что хотите удалить этот проект?')">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="project_id" value="{{ project.id }}">
+                            <button type="submit" class="btn btn-delete">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% if not projects %}
+                <div class="empty-state">
+                    <h3>📁 Проекты не найдены</h3>
+                    <p>Добавьте первый проект, нажав кнопку "Добавить проект"</p>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Toggle tags management section
+        function toggleTagsManagement() {
+            const tagsSection = document.getElementById('tags-management');
+            tagsSection.style.display = tagsSection.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Update tag checkboxes based on project tags
+        function updateTagCheckboxes(projectTags) {
+            // Clear all checkboxes first
+            const checkboxes = document.querySelectorAll('input[name="tags"]');
+            checkboxes.forEach(cb => cb.checked = false);
+
+            // Check the ones that match project tags
+            if (projectTags && projectTags.length > 0) {
+                projectTags.forEach(tag => {
+                    const checkbox = document.getElementById('tag-' + tag.id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+        }
+
+        // Project form management
+        function showAddForm() {
+            document.getElementById('form-title').textContent = 'Добавить новый проект';
+            document.getElementById('project-form').style.display = 'block';
+            document.getElementById('project-form-element').reset();
+            document.getElementById('project-id').value = '';
+            updateTagCheckboxes([]);
+            window.scrollTo(0, document.getElementById('project-form').offsetTop);
+        }
+
+        function hideForm() {
+            document.getElementById('project-form').style.display = 'none';
+        }
+
+        function editProject(projectId) {
+            // Find project data
+            const projects = {{ projects | tojson }};
+            const project = projects.find(p => p.id === projectId);
+
+            if (project) {
+                document.getElementById('form-title').textContent = 'Редактировать проект';
+                document.getElementById('project-id').value = project.id;
+                document.getElementById('title').value = project.title;
+                document.getElementById('description').value = project.description;
+                document.getElementById('full_description').value = project.full_description;
+                document.getElementById('live_url').value = project.live_url;
+
+                updateTagCheckboxes(project.tags || []);
+
+                document.getElementById('project-form').style.display = 'block';
+                window.scrollTo(0, document.getElementById('project-form').offsetTop);
+            }
+        }
+
+        function duplicateProject(projectId) {
+            // Find project data
+            const projects = {{ projects | tojson }};
+            const project = projects.find(p => p.id === projectId);
+
+            if (project) {
+                document.getElementById('form-title').textContent = 'Дублировать проект';
+                document.getElementById('project-id').value = ''; // Clear ID for new project
+                document.getElementById('title').value = project.title + ' (копия)';
+                document.getElementById('description').value = project.description;
+                document.getElementById('full_description').value = project.full_description;
+                document.getElementById('live_url').value = project.live_url;
+
+                updateTagCheckboxes(project.tags || []);
+
+                document.getElementById('project-form').style.display = 'block';
+                window.scrollTo(0, document.getElementById('project-form').offsetTop);
+            }
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

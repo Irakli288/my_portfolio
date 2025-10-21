@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Портфолио - Веб-разработчик</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="hero-section">
+        <div class="hero-image">
+            <img src="{{ url_for('static', filename='images/hero-photo.jpg') }}" alt="Profile Photo">
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-name">{{ t.name }}</h1>
+            <h2>{{ t.title }}</h2>
+            <p class="hero-description">
+                {{ t.description }}
+            </p>
+            <div class="contact-info">
+                <p><strong>{{ t.email }}:</strong> <a href="mailto:Iraklikekelashvili32@gmail.com" class="contact-link">Iraklikekelashvili32@gmail.com</a></p>
+                <p><strong>{{ t.phone }}:</strong> <a href="tel:+79636309849" class="contact-link">+7 (963) 630-98-49</a></p>
+                <p><strong>{{ t.telegram }}:</strong> <a href="https://t.me/BOMBAKLI" target="_blank" class="contact-link">@BOMBAKLI</a></p>
+                <p><strong>{{ t.github }}:</strong> <a href="https://github.com/Irakli288" target="_blank" class="contact-link">github.com/Irakli288</a></p>
+            </div>
+        </div>
+    </header>
+
+    <main class="portfolio-section">
+        <div class="container">
+            <h2 class="section-title">{{ t.my_works }}</h2>
+
+            <!-- Tags Filter -->
+            {% if tags %}
+            <div class="tags-filter">
+                <a href="{{ url_for('index') }}" class="filter-tag {% if not selected_tag %}active{% endif %}">
+                    Все
+                </a>
+                {% for tag in tags %}
+                <a href="{{ url_for('index', tag=tag.id) }}" class="filter-tag {% if selected_tag == tag.id %}active{% endif %}">
+                    {{ tag.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="portfolio-grid">
+                {% for project in projects %}
+                <div class="portfolio-card" data-project-id="{{ project.id }}">
+                    <div class="card-image">
+                        <img src="{{ project.preview_image }}" alt="{% if t.projects[project.id] %}{{ t.projects[project.id].title }}{% else %}{{ project.title }}{% endif %}">
+                    </div>
+                    <div class="card-content">
+                        <h3>{% if t.projects[project.id] %}{{ t.projects[project.id].title }}{% else %}{{ project.title }}{% endif %}</h3>
+                        <p>{% if t.projects[project.id] %}{{ t.projects[project.id].description }}{% else %}{{ project.description }}{% endif %}</p>
+                        {% if project.tags %}
+                        <div class="card-tags">
+                            <div class="card-tags-scroll">
+                                {% for tag in project.tags %}
+                                <span class="tag-badge">{{ tag.name }}</span>
+                                {% endfor %}
+                                {% for tag in project.tags %}
+                                <span class="tag-badge">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        <button class="view-details-btn" data-project-id="{{ project.id }}">
+                            {{ t.view_details }}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <h3>{{ t.name }}</h3>
+                <p>{{ t.title }}</p>
+                <div class="footer-contacts">
+                    <p><strong>{{ t.email }}:</strong> <a href="mailto:Iraklikekelashvili32@gmail.com" class="contact-link">Iraklikekelashvili32@gmail.com</a></p>
+                    <p><strong>{{ t.phone }}:</strong> <a href="tel:+79636309849" class="contact-link">+7 (926) 345-01-11</a></p>
+                    <p><strong>{{ t.telegram }}:</strong> <a href="https://t.me/BOMBAKLI" target="_blank" class="contact-link">@BOMBAKLI</a></p>
+                    <p><strong>{{ t.github }}:</strong> <a href="https://github.com/Irakli288" target="_blank" class="contact-link">github.com/Irakli288</a></p>
+                </div>
+                <!-- Hidden Admin Access -->
+                <div class="admin-access">
+                    <button id="admin-btn" class="admin-access-btn">⚙</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Project Modal Window -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div id="modal-image-container" class="modal-image-container">
+                    <img id="modal-image" src="" alt="">
+                </div>
+                <h3 id="modal-title"></h3>
+                <p id="modal-description"></p>
+                <a id="modal-link" href="javascript:void(0)" target="_blank" class="live-link" style="display: none;">
+                    Посмотреть проект
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Confirmation Modal -->
+    <div id="admin-modal" class="modal admin-modal">
+        <div class="modal-content admin-modal-content">
+            <span class="close-modal" id="close-admin-modal">&times;</span>
+            <div class="modal-body">
+                <div class="admin-modal-icon">🔐</div>
+                <h3 id="admin-modal-title">
+                    Подтверждение авторизации
+                </h3>
+                <p id="admin-modal-description">
+                    Для доступа к админ-панели требуется подтверждение администратора.<br>
+                    Нажмите "Запросить доступ" - администратор получит уведомление в Telegram и сможет одобрить ваш запрос.
+                </p>
+                <div class="admin-modal-actions">
+                    <button id="request-access-btn" class="admin-modal-btn primary">
+                        Запросить доступ
+                    </button>
+                    <button id="cancel-admin-btn" class="admin-modal-btn cancel">
+                        Отмена
+                    </button>
+                </div>
+
+                <!-- Waiting for approval (hidden by default) -->
+                <div id="waiting-approval" class="waiting-approval" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Ожидание подтверждения администратора...</p>
+                    <p class="waiting-hint">Запрос отправлен администратору в Telegram. Если админ одобрит - вы автоматически попадете в админ-панель.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pass translations to JavaScript
+        window.translations = JSON.parse('{{ t | tojson | safe }}');
+        window.currentLang = '{{ lang }}';
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=2"></script>
+</body>
+</html>

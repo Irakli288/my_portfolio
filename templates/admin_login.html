@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Вход</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <h1>🔐 Вход в админ-панель</h1>
+
+            {% if error %}
+                <div class="alert alert-error">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            {% if success %}
+                <div class="alert alert-success">
+                    {{ success }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('admin_login') }}">
+                <div class="form-group">
+                    <label for="token">Токен авторизации:</label>
+                    <input type="text" id="token" name="token"
+                           value="{{ request.args.get('token', '') }}"
+                           placeholder="Введите токен из Telegram бота" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </form>
+
+            <div class="login-info">
+                <h3>📱 Как получить доступ:</h3>
+                <ol>
+                    <li>Напишите в Telegram боту команду <code>/auth</code></li>
+                    <li>Дождитесь подтверждения от администратора</li>
+                    <li>Используйте полученный токен для входа</li>
+                </ol>
+
+                <p class="telegram-link">
+                    <a href="{{ bot_url }}" target="_blank">
+                        📱 Открыть Telegram бота
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
